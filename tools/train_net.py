@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 
 """Train a video classification model."""
+import time
 import numpy as np
 import pprint
 import torch
@@ -45,7 +46,9 @@ def train_epoch(
     train_meter.iter_tic()
     data_size = len(train_loader)
 
+    my_batch_start = time.time()
     for cur_iter, (inputs, labels, _, meta) in enumerate(train_loader):
+        my_batch_reader_end = time.time()
         # Transfer the data to the current GPU device.
         if cfg.NUM_GPUS:
             if isinstance(inputs, (list,)):
@@ -128,6 +131,11 @@ def train_epoch(
                     top1_err.item(),
                     top5_err.item(),
                 )
+
+            train_batch_cost = time.time() - my_batch_start
+            train_reader_cost = my_batch_reader_end - my_batch_start
+            my_batch_start =time.time()
+            print( "==========[Epoch %d, batch %d] batch_cost: %.5f s, reader_cost: %.5f s========" % (cur_epoch, cur_iter, train_batch_cost, train_reader_cost))
 
             train_meter.iter_toc()
             # Update and log stats.
